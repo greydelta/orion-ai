@@ -1,0 +1,72 @@
+pipenv installation error:
+[format: pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org <package_name>]
+pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org mcp-agent mcp-proxy
+
+tracking command:
+pipenv shell python -m 
+python -m pipenv shell
+
+
+remove virtual env:
+pipenv --rm
+
+
+
+[TERMINALS]
+
+1. ollama (global)
+ollama run llama3.2
+
+2. launch FastAPI
+(for local + agent.py)
+uvicorn main:app --reload --port 8081
+
+(streamlit)
+uvicorn main2:app --reload --port 8081
+
+
+3. run commands:
+pipenv shell python -m
+cd mcp 
+python agent.py
+
+-- ARCHIVED --
+1. enter virtual env
+pipenv shell python -m 
+
+2. ollama (global)
+a) ollama run llama3.2
+
+3. podman (global)
+a) podman machine init
+b) podman machine start
+c) cd mcp
+[OLD]
+podman run -i --rm --env-file .env ghcr.io/github/github-mcp-server
+[WORKING - IN ADMIN PS]
+mcp-proxy --sse-port 8081 -- podman run -i --rm --env-file .env ghcr.io/github/github-mcp-server
+
+4. expose mcp server + run
+mcp-proxy --sse-port 8080 -- \
+  podman run -i --rm --env-file .env ghcr.io/github/github-mcp-server
+
+[MCP extension]
+Add more MCP methods (run, list_files)
+Add file type filtering or AST parsing
+Replace Ollama with OpenAI, Mistral, or Claude via API
+
+
+supabase:
+react123@@
+
+[REACT]
+frontend: npm run dev
+backend: node index.js
+
+
+[TCP alternative]
+cports: https://www.nirsoft.net/utils/cports.html
+Resmon:
+1. Press Win + R → type resmon → enter.
+2. Go to Network tab → Listening Ports.
+
