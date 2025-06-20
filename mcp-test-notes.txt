@@ -70,3 +70,17 @@ Resmon:
 1. Press Win + R → type resmon → enter.
 2. Go to Network tab → Listening Ports.
 
+[Todo]
+- framework parameters:
+- using .gitignore
+- allow user to specify langugau
+
+- prompt chaining
+
+- prompt library:
+- dynamic variables > example: Act as a {language} software engineer
+
+- prompt structure:
+- write down step by step process of identifying use case (human)
+- this will guide prompting structure
+
