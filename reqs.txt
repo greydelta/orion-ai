@@ -4,3 +4,8 @@ httpx
 python-dotenv
 tqdm
 colorama
+langgraph
+langchain
+langchain-community
+langchain-ollama
+streamlit
