@@ -10,7 +10,10 @@ load_dotenv()
 
 LOCAL_MCP_SERVER_URL = os.getenv("LOCAL_MCP_SERVER_URL")
 OLLAMA_URL = os.getenv("OLLAMA_URL")
-OLLAMA_MODELS = os.getenv("OLLAMA_MODELS")
+try:
+    OLLAMA_MODELS = json.loads(os.getenv("OLLAMA_MODELS"))
+except json.JSONDecodeError:
+    OLLAMA_MODELS = []
 
 # Session State
 if "chat_history" not in st.session_state:
@@ -24,6 +27,7 @@ st.sidebar.title(":blue[v1]")
 
 model = st.sidebar.selectbox("Select Model", OLLAMA_MODELS)
 github_file = st.sidebar.text_input("GitHub File Path", "src/App.java")
+language = st.sidebar.text_input("Language", "Java")
 
 # & Milestone 2
 st.sidebar.title(":blue[v2]")
@@ -103,3 +107,25 @@ if st.button("Analyze Code"):
     with st.chat_message("assistant"):
         st.markdown("🧠 LangGraph Output")
         st.code(analysis, language="json")
+
+if st.button("Get top language analysis"):
+    try:
+        response = httpx.post(
+            f"{LOCAL_MCP_SERVER_URL}/top-languages",
+            timeout=300
+        )
+        cp.log_debug("here:", response)
+        response.raise_for_status()
+
+        data = response.json()  # ✅ already a dict
+        cp.log_debug("📤 Raw LangGraph HTTP response:", data)
+
+        top = data.get("result", data)  # fallback to raw data if no .result
+        cp.log_debug("📤 Top language analysis:", top)
+
+    except Exception as e:
+        top = f"❌ Error (app.py): {e}"
+
+    with st.chat_message("assistant"):
+        st.markdown("🧠 Top language analysis")
+        st.code(top, language="json")

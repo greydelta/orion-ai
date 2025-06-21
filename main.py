@@ -3,6 +3,7 @@ import os, json
 import httpx
 from dotenv import load_dotenv
 from typing import Optional, Union
+from uuid import uuid4
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -56,6 +57,20 @@ async def fetch_github_repo_code():
                 file_resp = await client.get(raw_url)
                 documents.append({"name": file["path"], "content": file_resp.text})
         return documents
+
+@app.post("/top-languages")
+async def get_repo_top_languages():
+    cp.log_info('get_repo_top_languages() called')
+    headers = {
+        "Authorization": f"token {GITHUB_TOKEN}",
+        "Accept": "application/vnd.github.v3+json"
+    }
+    async with httpx.AsyncClient(timeout=None, verify=False) as client:
+        url = f"https://api.github.com/repos/{GITHUB_REPO}/languages"
+        response = await client.get(url, headers=headers)
+        result = response.json()
+        cp.log_info("Received response from GitHub API for languages", result)
+        return {"result": result}
 
 @app.post("/")
 async def handle_rpc(request: Request):
@@ -112,24 +127,38 @@ async def analyze_file(request: Request):
         return JSONResponse(status_code=404, content={"error": "File not found"})
 
     cp.log_info("⚙️  engineer_task() called")
-    state = EngineerState(code=match["content"])
+    state = EngineerState(
+        run_id = str(uuid4()),
+        code = match["content"]
+    )
+    # state = EngineerState(state)
     
-    cp.log_debug("⚙️  Running graph.invoke...")
     result = graph.invoke(state)
-    cp.log_debug("✅ LangGraph completed")
-
-
     raw_output = result.get("json_spec", "")
     cp.log_debug("🧠 Raw LLM Output:\n", raw_output)
+    cp.log_debug("🧠 Typeof LLM Output:\n", type(raw_output))
+
     try:
         parsed = json.loads(raw_output)
+        cp.log_debug("🧠 Parsed LLM Output:\n", parsed)
+        # parsed = json.loads(raw_output) if isinstance(raw_output, str) else raw_output
+
         functions = parsed.get("functions", [])
         cp.log_info("\n🔍 Found {len(functions)} functions:\n")
 
         for idx, func in enumerate(functions, start=1):
             cp.log_info(f"Function {idx}:")
             cp.log_info("  Name:", func.get("name"))
-            cp.log_info("  Parameters:", ", ".join(func.get("parameters", [])))
+
+            params = func.get("parameters", [])
+            if params and isinstance(params[0], dict):
+                param_str = ", ".join(
+                    f"{p.get('type', '')} {p.get('name', '')}" for p in params
+                )
+            else:
+                param_str = ", ".join(params)
+            cp.log_info("  Parameters:", param_str)
+
             cp.log_info("  Description:", func.get("description"))
             cp.log_info()
     except Exception as e:
