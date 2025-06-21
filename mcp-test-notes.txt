@@ -11,43 +11,26 @@ remove virtual env:
 pipenv --rm
 
 
-[mcp-github]
+[orion-ai]
 Pre: pip install -r reqs.txt
 
 [TERMINALS]
 
-1. ollama (global)
-ollama run llama3.2
+1. Start ollama instance (global)
+a) set OLLAMA_HOST=0.0.0.0:11434 && ollama serve
+b) ollama run llama3.2
 
-2A. launch FastAPI
-(for local + agent.py)
-uvicorn main:app --reload --port 8081
+2. Launch MCP server
+a)  pipenv shell python -m
+    cd mcp-github
+    uvicorn main:app --reload --port 8081
 
-3A. run commands:
-pipenv shell python -m
-cd mcp-github
-python agent.py
+3. Run app:
+a) streamlit run app.py
 
-2B. launch FastAPI
-(streamlit)
-uvicorn main2:app --reload --port 8081
 
-3B. run commands:
-streamlit run app.py
 
 -- ARCHIVED --
-1. enter virtual env
-pipenv shell python -m 
-
-2. ollama (global)
-a) ollama run llama3.2
-
-3. podman (global)
-a) podman machine init
-b) podman machine start
-c) cd mcp
-
-[OLD]
 podman run -i --rm --env-file .env ghcr.io/github/github-mcp-server
 [WORKING - IN ADMIN PS]
 mcp-proxy --sse-port 8081 -- podman run -i --rm --env-file .env ghcr.io/github/github-mcp-server
