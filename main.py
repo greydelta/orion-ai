@@ -1,9 +1,17 @@
-from fastapi import FastAPI, Request
-from pydantic import BaseModel
-from typing import Optional, Union
+import os, json
+
 import httpx
-import os
 from dotenv import load_dotenv
+from typing import Optional, Union
+
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel
+
+import utils.color_print as cp
+from agent import run_engineer_pipeline  
+from langgraph_pipeline import graph, EngineerState
 
 load_dotenv()
 app = FastAPI()
@@ -11,13 +19,27 @@ app = FastAPI()
 GITHUB_TOKEN = os.getenv("GITHUB_PERSONAL_ACCESS_TOKEN")
 GITHUB_REPO = os.getenv("GITHUB_REPO")
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 class JsonRPCRequest(BaseModel):
     jsonrpc: str
     method: str
     params: Optional[dict] = {}
     id: Optional[Union[int, str]] = None
 
+class ChatRequest(BaseModel):
+    model: Optional[str] = "llama3.2"
+    file_path: str
+    message: str  # future prompt variations
+
 async def fetch_github_repo_code():
+    cp.log_info('fetch_github_repo_code() called')
     headers = {
         "Authorization": f"token {GITHUB_TOKEN}",
         "Accept": "application/vnd.github.v3+json"
@@ -41,15 +63,18 @@ async def handle_rpc(request: Request):
     try:
         rpc = JsonRPCRequest(**body)
         if rpc.method == "get_context":
+            cp.log_info('/get_context called')
             documents = await fetch_github_repo_code()
             return {"jsonrpc": "2.0", "id": rpc.id, "result": {"documents": documents}}
 
         elif rpc.method == "list_files":
+            cp.log_info('/list_files called')
             documents = await fetch_github_repo_code()
             file_list = [doc["name"] for doc in documents]
             return {"jsonrpc": "2.0", "id": rpc.id, "result": {"files": file_list}}
 
         elif rpc.method == "run":
+            cp.log_info('/run called')
             filename = rpc.params.get("filename")
             target_lang = rpc.params.get("target_language", "Python")
 
@@ -66,3 +91,49 @@ async def handle_rpc(request: Request):
             return {"jsonrpc": "2.0", "id": rpc.id, "error": {"code": -32601, "message": "Method not found"}}
     except Exception as e:
         return {"jsonrpc": "2.0", "id": None, "error": {"code": -32700, "message": f"Parse error: {str(e)}"}}
+
+
+@app.post("/chat")
+async def chat_with_mcp(req: ChatRequest):
+    try:
+        result = await run_engineer_pipeline(file_name=req.file_path)
+        return {"response": result}
+    except Exception as e:
+        return {"response": f"❌ Error /chat: {str(e)}"}
+
+@app.post("/analyze")
+async def analyze_file(request: Request):
+    data = await request.json()
+    filename = data.get("filename")
+
+    docs = await fetch_github_repo_code()
+    match = next((doc for doc in docs if doc["name"] == filename), None)
+    if not match:
+        return JSONResponse(status_code=404, content={"error": "File not found"})
+
+    cp.log_info("⚙️  engineer_task() called")
+    state = EngineerState(code=match["content"])
+    
+    cp.log_debug("⚙️  Running graph.invoke...")
+    result = graph.invoke(state)
+    cp.log_debug("✅ LangGraph completed")
+
+
+    raw_output = result.get("json_spec", "")
+    cp.log_debug("🧠 Raw LLM Output:\n", raw_output)
+    try:
+        parsed = json.loads(raw_output)
+        functions = parsed.get("functions", [])
+        cp.log_info("\n🔍 Found {len(functions)} functions:\n")
+
+        for idx, func in enumerate(functions, start=1):
+            cp.log_info(f"Function {idx}:")
+            cp.log_info("  Name:", func.get("name"))
+            cp.log_info("  Parameters:", ", ".join(func.get("parameters", [])))
+            cp.log_info("  Description:", func.get("description"))
+            cp.log_info()
+    except Exception as e:
+        cp.log_error(f"❌ Failed to parse LLM output: {e}")
+        return {"error": str(e)}
+
+    return {"result": raw_output}

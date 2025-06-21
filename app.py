@@ -1,45 +1,59 @@
-# import streamlit as st
-# import pandas as pd
+import os, json
 
-# st.write("Hello world")
-# st.write("Here's our first attempt at using data to create a table:")
-# st.write(pd.DataFrame({
-#     'first column': [1, 2, 3, 4],
-#     'second column': [10, 20, 30, 40]
-# }))
-
-import streamlit as st
 import httpx
-import os
+import streamlit as st
 from dotenv import load_dotenv
+
+import utils.color_print as cp
 
 load_dotenv()
 
 LOCAL_MCP_SERVER_URL = os.getenv("LOCAL_MCP_SERVER_URL")
 OLLAMA_URL = os.getenv("OLLAMA_URL")
+OLLAMA_MODELS = os.getenv("OLLAMA_MODELS")
 
-# --- Configuration ---
-OLLAMA_MODELS = ["llama3.2", "codellama"]  # Extend as needed
-
-# --- Session State ---
+# Session State
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 
-# --- Sidebar Settings ---
-st.sidebar.title("Settings")
-model = st.sidebar.selectbox("Select Ollama Model", OLLAMA_MODELS)
-github_file = st.sidebar.text_input("GitHub File Path", "src/main.java")
+# ^ --- Sidebar Settings ---
+st.sidebar.title(":red[OrionAI]")
 
-# --- Header ---
-st.title("💬 Code Translator Chat (MCP + Ollama)")
-st.markdown("Talk to your MCP-backed code translator. Select a model and file, then start chatting.")
+# & Milestone 1
+st.sidebar.title(":blue[v1]")
 
-# --- Chat Display ---
+model = st.sidebar.selectbox("Select Model", OLLAMA_MODELS)
+github_file = st.sidebar.text_input("GitHub File Path", "src/App.java")
+
+# & Milestone 2
+st.sidebar.title(":blue[v2]")
+
+# GitHub Repository Selection
+st.sidebar.subheader("Select GitHub Repository")
+selected_repo_option = st.sidebar.selectbox(
+    "Select GitHub Repo",
+    ("repo1", "repo2"),
+    index=None,
+    placeholder="Select a repo...",
+)
+st.sidebar.write("Your selected repo: :orange[", selected_repo_option, "]")
+
+# Junior and Senior Engineer Models
+st.sidebar.subheader("Engineer Models")
+junior_engineer_1_model = st.sidebar.selectbox("Select Junior Engineer 1 Model", OLLAMA_MODELS)
+junior_engineer_2_model = st.sidebar.selectbox("Select Junior Engineer 2 Model", OLLAMA_MODELS)
+senior_engineer_model = st.sidebar.selectbox("Select Senior Engineer Model", OLLAMA_MODELS)
+
+# ^ --- Header ---
+st.title("OrionAI: Code to Docs")
+st.markdown("Select a model and GitHub repository to start analyzing. ")
+
+# Chat Display
 for msg in st.session_state.chat_history:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
 
-# --- Chat Input ---
+# Chat Input
 user_input = st.chat_input("Type your message...")
 if user_input:
     # Save user message
@@ -68,3 +82,24 @@ if user_input:
     with st.chat_message("assistant"):
         st.markdown(reply)
 
+if st.button("Analyze Code"):
+    try:
+        response = httpx.post(
+            f"{LOCAL_MCP_SERVER_URL}/analyze",
+            json={"filename": github_file},
+            timeout=300
+        )
+        response.raise_for_status()
+        raw = response.text
+        cp.log_debug("📤 Raw LangGraph HTTP response:", raw)
+
+        data = json.loads(raw)
+        analysis = data.get("result", "No output")
+        cp.log_debug("📤 Extracted analysis:", analysis)
+
+    except Exception as e:
+        analysis = f"❌ Error (app.py): {e}"
+
+    with st.chat_message("assistant"):
+        st.markdown("🧠 LangGraph Output")
+        st.code(analysis, language="json")
