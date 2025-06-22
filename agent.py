@@ -47,7 +47,7 @@ async def run_engineer_pipeline(file_name="src/App.java"):
     try:
         parsed = json.loads(raw_output)
         functions = parsed.get("functions", [])
-        cp.log_info(f"\n🔍 Found {len(functions)} functions:\n")
+        cp.log_info(f"\n🔍 Found {len(functions)} functions:")
 
         for idx, func in enumerate(functions, start=1):
             cp.log_info(f"Function {idx}:")

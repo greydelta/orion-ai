@@ -120,6 +120,7 @@ async def chat_with_mcp(req: ChatRequest):
 async def analyze_file(request: Request):
     data = await request.json()
     filename = data.get("filename")
+    language = data.get("language")
 
     docs = await fetch_github_repo_code()
     match = next((doc for doc in docs if doc["name"] == filename), None)
@@ -136,7 +137,6 @@ async def analyze_file(request: Request):
     result = graph.invoke(state)
     raw_output = result.get("json_spec", "")
     cp.log_debug("🧠 Raw LLM Output:\n", raw_output)
-    cp.log_debug("🧠 Typeof LLM Output:\n", type(raw_output))
 
     try:
         parsed = json.loads(raw_output)
@@ -144,9 +144,9 @@ async def analyze_file(request: Request):
         # parsed = json.loads(raw_output) if isinstance(raw_output, str) else raw_output
 
         functions = parsed.get("functions", [])
-        cp.log_info("\n🔍 Found {len(functions)} functions:\n")
+        cp.log_info(f"\n🔍 Found {len(functions)} functions:")
 
-        for idx, func in enumerate(functions, start=1):
+        for idx, func in enumerate(functions, start = 1):
             cp.log_info(f"Function {idx}:")
             cp.log_info("  Name:", func.get("name"))
 
@@ -161,6 +161,18 @@ async def analyze_file(request: Request):
 
             cp.log_info("  Description:", func.get("description"))
             cp.log_info()
+
+        variables = parsed.get("variables", [])
+        cp.log_info(f"\n🔍 Found {len(variables)} variables:")
+
+        for idx, var in enumerate(variables, start = 1):
+            cp.log_info(f"Variables {idx}:")
+            cp.log_info("  Name:", var.get("name"))
+            cp.log_info("  Data Type:", var.get("data_type"))
+            cp.log_info("  Access Level:", var.get("access_level"))
+            cp.log_info("  Description:", var.get("description"))
+            cp.log_info()
+
     except Exception as e:
         cp.log_error(f"❌ Failed to parse LLM output: {e}")
         return {"error": str(e)}
