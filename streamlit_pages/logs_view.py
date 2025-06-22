@@ -7,22 +7,28 @@ local_tz = ZoneInfo("Asia/Kuala_Lumpur")
 
 def render_tab2():
 
-    st.title("🔍 :green[Supabase Data Viewer]")
+    st.title(":green[Logs Viewer]")
 
     query = st.text_area("SQL Query", """
         SELECT 
-            a.cycle_id,
-            ag.role_name,
-            lm.model_name,
-            a.step_number,
-            a.raw_input, 
-            a.raw_output, 
-            a.validated_json, 
-            a.status, 
-            a.created_at  
-        FROM agent_step a
-        JOIN llm_model lm ON a.llm_model_id = lm.id
-        JOIN agent ag ON a.agent_id = ag.id
+            project_id,
+            run_id,
+            cycle_id,
+            step_number,
+            agent_id,
+            agent_role,
+            llm_model_id,
+            llm_model_name,
+            prompt_id,
+            prompt_type, 
+            raw_input,
+            raw_output,
+            validated_json,
+            confidence,
+            status, 
+            created_at  
+        FROM temp_agent_step
+        ORDER BY created_at DESC
         LIMIT 10
     """)
 
@@ -38,27 +44,52 @@ def render_tab2():
         st.warning("No records found.")
         st.stop()
 
-    col1, col2, col3, col4, col5, col6 = st.columns([2, 2, 2, 1, 2, 1])
-    col1.markdown("**Cycle ID**")
-    col2.markdown("**Role Name**")
-    col3.markdown("**Model Name**")
-    col4.markdown("**Status**")
-    col5.markdown("**Created At**")
-    col6.markdown("**Action**")
+    col1, col2, col3, col4, col5, col6, col7, col8 = st.columns([1, 1, 2, 1, 2, 1, 2, 1])
+    col1.markdown("**Project/Run ID**")
+    col2.markdown("**Cycle ID/Step**")
+    col3.markdown("**Role**")
+    col4.markdown("**Model**")
+    col5.markdown("**Prompt**")
+    col6.markdown("**Status**")
+    col7.markdown("**Created At**")
+    col8.markdown("**Action**")
 
     # Table view with View buttons
     for idx, row in enumerate(rows):
-        col1, col2, col3, col4, col5, col6 = st.columns([2, 2, 2, 1, 2, 1])
-        col1.markdown(f"**{row['cycle_id'][:8]}...**")
-        col2.markdown(row["role_name"])
-        col3.markdown(row["model_name"])
-        col4.markdown(f":green[{row["status"]}]")
+        col1, col2, col3, col4, col5, col6, col7, col8 = st.columns([1, 1, 2, 1, 2, 1, 2, 1])
+        col1.markdown(
+            f"<span style='color: gray;'>{row['project_id']}</span><br><strong>{row['run_id'][:8]}</strong>",
+            unsafe_allow_html=True
+        )
+        col2.markdown(
+            f"<span style='color: gray;'>N/A</span><br><strong>{row['step_number']}</strong>",
+            unsafe_allow_html=True
+        )
+        col3.markdown(
+            f"<span style='color: gray;'>{row['agent_id']}</span><br><strong>{row['agent_role']}</strong>",
+            unsafe_allow_html=True
+        )
+        col4.markdown(
+            f"<span style='color: gray;'>{row['llm_model_id']}</span><br><strong>{row['llm_model_name']}</strong>",
+            unsafe_allow_html=True
+        )
+        col5.markdown(
+            f"<span style='color: gray;'>{row['prompt_id']}</span><br><strong>{row['prompt_type']}</strong>",
+            unsafe_allow_html=True
+        )
+        col6.markdown(
+            f"<span style='color: gray;'>Confidence: </span><br><span style='color: green;'><strong>{row['status']}</strong></span>",
+            unsafe_allow_html=True
+        )
         converted_date = row["created_at"].astimezone(local_tz)
         date = converted_date.strftime('%Y-%m-%d')
         time = converted_date.strftime('%H:%M:%S')
-        col5.markdown(f"**{date}**  {time}")
+        col7.markdown(
+            f"<span style='color: gray;'>{date}</span><br><strong>{time}</strong>",
+            unsafe_allow_html=True
+        )
 
-        if col6.button("View", key=f"view_{idx}"):
+        if col8.button("View", key=f"view_{idx}"):
             st.session_state["selected_row"] = row
 
     # Divider

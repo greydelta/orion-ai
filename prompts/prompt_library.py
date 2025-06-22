@@ -3,44 +3,68 @@ from pathlib import Path
 from typing import Optional
 
 import utils.color_print as cp
-from schemas.json_output_structures import get_engineer_example_json
 
 class PromptLibrary:
     def __init__(self, base_path: str = "./prompts"):
         self.base_path = Path(base_path)
 
-    def get_prompt_template(self, role: str) -> dict:
-        """Load prompt JSON template for a specific agent role."""
+    def get_prompt_template(self, role: str, prompt_type: str = None) -> dict:
+        """Load and optionally select a specific prompt template for a given role."""
         path = self.base_path / f"{role}.json"
         if not path.exists():
             raise FileNotFoundError(f"Prompt file for role '{role}' not found: {path}")
-        return json.loads(path.read_text())
+        
+        templates = json.loads(path.read_text())
 
-    def build_prompt(self, role: str, code: str) -> str:
+        if isinstance(templates, list):
+            if prompt_type:
+                for tpl in templates:
+                    if tpl.get("type") == prompt_type:
+                        return tpl
+                raise ValueError(f"No prompt with type '{prompt_type}' found in {path}")
+            else:
+                return templates[0]  # default to first
+        elif isinstance(templates, dict):
+            return templates  # single template form
+        else:
+            raise ValueError(f"Invalid format in {path}")
+
+    def build_prompt(self, role: str, prompt_type: str, code: str) -> tuple[str, str]:
         cp.log_info(f"Building prompt for role: {role}")
         """Render a complete prompt from the template, filling in the code and example JSON."""
-        prompt = self.get_prompt_template(role)
-        example_json = get_engineer_example_json() if role == "engineer" else "{}"
+
+        json_prompt = self.get_prompt_template(role, prompt_type)
+        prompt_id = json_prompt.get("id", "unknown")
+
+        system = json_prompt.get("system", "")
+        instructions = json_prompt.get("instructions", "")
+        rules = json_prompt.get("rules", [])
+        example_json = json_prompt.get("format", {})
+
         formatted_prompt = f"""
-{prompt['system']}
+            {system}
 
-Instructions:
-{prompt['instructions']}
+            Instructions:
+            {instructions}
 
-Output Format:
-{json.dumps(prompt['format'], indent=2)}
+            Example Output Format:
+            {json.dumps(example_json, indent=2)}
 
-Rules:
-- {'\n- '.join(prompt['rules'])}
+            Rules:
+            - {'\n- '.join(rules)}
 
-Example Output:
-{example_json}
-
-Code:
-{code}
+            Code:
+            {code}
         """
         cp.log_debug(f"📜 Prompt for role '{role}':\n{formatted_prompt}")
-        return formatted_prompt
+        return formatted_prompt, prompt_id
+
+    def get_role_details(self, role: str, prompt_type: str) -> tuple[str, str]:
+        json_prompt = self.get_prompt_template(role, prompt_type)
+        role = json_prompt.get("role", "unknown")
+        role_id = json_prompt.get("role_id", "")
+        cp.log_info(f"Retrieved role '{role}' with ID '{role_id}' for prompt type '{prompt_type}'")
+        return role, role_id
 
     def available_roles(self) -> list:
         """List all available roles in the prompt library."""

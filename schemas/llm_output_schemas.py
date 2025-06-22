@@ -1,11 +1,8 @@
 from typing import List, Optional
 
 from pydantic import BaseModel
-
-import json
-
 class ParameterSchema(BaseModel):
-    type: str
+    data_type: str
     name: str
 
 class FunctionSchema(BaseModel):

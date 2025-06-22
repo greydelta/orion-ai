@@ -14,18 +14,24 @@ async def get_db_conn():
 async def log_agent_step(data: dict):
     conn = await get_db_conn()
     await conn.execute("""
-        INSERT INTO agent_step (
-            cycle_id, agent_id, llm_model_id, prompt_id,
-            step_number, raw_input, raw_output,
-            validated_json, confidence, feedback, status
+        INSERT INTO temp_agent_step (
+            project_id, run_id, cycle_id, step_number,
+            agent_id, agent_role, agent_desc,
+            llm_model_id, llm_model_name, prompt_id, prompt_type,
+            raw_input, raw_output, validated_json,
+            confidence, status
         ) VALUES (
             $1, $2, $3, $4,
             $5, $6, $7,
-            $8, $9, $10, $11
+            $8, $9, $10, $11,
+            $12, $13, $14,
+            $15, $16
         )
-    """, data['cycle_id'], data['agent_id'], data['llm_model_id'], data['prompt_id'],
-         data['step_number'], data['raw_input'], data['raw_output'],
-         data['validated_json'], data['confidence'], data['feedback'], data['status'])
+    """,    data['project_id'], data['run_id'], data['cycle_id'], data['step_number'],
+            data['agent_id'], data['agent_role'], data.get('agent_desc', ''),
+            data['llm_model_id'], data['llm_model_name'], data['prompt_id'], data['prompt_type'],
+            data['raw_input'], data['raw_output'], data['validated_json'],
+            data['confidence'], data['status'])
     await conn.close()
 
 async def fetch_data(query: str):

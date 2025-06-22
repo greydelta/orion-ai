@@ -13,13 +13,11 @@ from pydantic import BaseModel, TypeAdapter
 import utils.color_print as cp
 import utils.json_validator as jv
 from schemas.llm_output_schemas import EngineerOutputSchema
-# from schemas.json_output_structures import get_engineer_example_json
 from prompts.prompt_library import PromptLibrary
 from database import log_agent_step
 
 prompt_lib = PromptLibrary()
 DB_URL = os.getenv("SUPABASE_DB_URL")
-DUMMY_UUID = os.getenv("DUMMY_UUID")
 
 # LangGraph Node
 llm = OllamaLLM(model="llama3.2")
@@ -29,34 +27,25 @@ llm = OllamaLLM(model="llama3.2")
 
 # LangGraph State
 class EngineerState(BaseModel):
+    project_id: str = "alpha"
     run_id: str
     cycle_id: int = 0
+    agent: object = None 
+    model: object = None
     code: str
-    prompt: Optional[str] = None
+    prompt: object = None
     json_spec: Optional[Union[dict, str]] = None
     validated_output: Optional[EngineerOutputSchema] = None
     retry_count: int = 0
     max_retries: int = 3
 
 def engineer_task(state: EngineerState) -> EngineerState:
+    prompt_type = "code_extraction"
     cp.log_info('engineer_task() called')
     cp.log_info(f"▶️ Run: {state.run_id} | Cycle: {state.cycle_id}")
 
-    # example_json = get_engineer_example_json()
-    # cp.log_debug('example JSON:', example_json)
-    
-    # prompt = f"""
-    #     You are a senior software engineer. Analyze the following code and extract a structured JSON schema with all functions, variables, and their purposes.
-
-    #     Return ONLY valid JSON, no explanations, no extra text.
-    #     Example format:
-    #     {example_json}
-
-    #     Code:
-    #     {state.code}
-    # """
-
-    prompt = prompt_lib.build_prompt("engineer", code=state.code)
+    prompt, prompt_id = prompt_lib.build_prompt("engineer", prompt_type, code=state.code)
+    role, role_id = prompt_lib.get_role_details("engineer", prompt_type)
 
     response = llm.invoke(prompt)
     cp.log_debug('response from LLM:', response)
@@ -64,7 +53,9 @@ def engineer_task(state: EngineerState) -> EngineerState:
     return EngineerState(
         run_id = state.run_id,
         code = state.code,
-        prompt = prompt,
+        prompt = { "id": prompt_id, "type": prompt_type, "input": prompt },
+        model = { "id": "1", "name": "llama3.2" },
+        agent = { "id": role_id, "role": role },
         json_spec = response,
         retry_count = state.retry_count,
         max_retries = state.max_retries
@@ -76,17 +67,23 @@ def validate_engineer_json(state: EngineerState) -> EngineerState:
         cp.log_info('✅ output is valid JSON')
         asyncio.create_task(
             log_agent_step({
-                "cycle_id": "084aad73-5f1d-49f2-b3f8-910d71945ac9", # state.run_id,
-                "agent_id": "77f8f395-41c4-4c3f-8ac7-0aa9d7133f3f",
-                "llm_model_id": "07b2a463-7d4e-447d-a35b-0f603151a9a5",
-                "prompt_id": "53d81c1b-55b8-4dec-9d71-488ab4565efe",
-                "step_number": state.retry_count,
-                "raw_input": state.prompt,
+                "project_id": "alpha",
+                "run_id": state.run_id,
+                "cycle_id": str(state.retry_count + 1),
+                "step_number": state.retry_count + 1,
+
+                "agent_id": state.agent["id"],
+                "agent_role": state.agent["role"],
+                "llm_model_id": state.model["id"],
+                "llm_model_name": state.model["name"],
+                "prompt_id": state.prompt["id"],
+                "prompt_type": state.prompt["type"],
+                "raw_input": state.prompt["input"],
+
                 "raw_output": state.json_spec,
                 "validated_json": state.json_spec,
                 "confidence": None,
-                "feedback": None,
-                "status": "completed"
+                "status": "passed"
             }
         ))
         return EngineerState(

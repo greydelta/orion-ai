@@ -13,7 +13,7 @@ load_dotenv()
 LOCAL_MCP_SERVER_URL = os.getenv("LOCAL_MCP_SERVER_URL")
 OLLAMA_URL = os.getenv("OLLAMA_URL")
 
-async def run_engineer_pipeline(file_name="src/App.java"):
+async def run_engineer_pipeline(file_name):
     cp.log_info('run_engineer_pipeline() called')
     # async with httpx.AsyncClient(verify=False) as client:
     #     resp = await client.post(LOCAL_MCP_SERVER_URL, json={
@@ -116,7 +116,6 @@ async def run_agent(file_name="Example.java", target_lang="Python"):
         response = resp.json()["response"]
         cp.log_debug(f"\n🔁 Model Response:\n\n{response}")
 
-if __name__ == "__main__":
-    import asyncio
-    # asyncio.run(run_agent(file_name="src/App.java", target_lang="Python"))
-    asyncio.run(run_engineer_pipeline(file_name="src/App.java"))
+# if __name__ == "__main__":
+#     import asyncio
+#     asyncio.run(run_engineer_pipeline(file_name="src/App.java"))

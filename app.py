@@ -21,7 +21,7 @@ st.set_page_config(layout="wide", page_title="OrionAI", page_icon="🚀")
 
 st.sidebar.title(":red[OrionAI]")
 
-tab1, tab2 = st.tabs(["🧠 OrionAI", "🗃️ Supabase View"])
+tab1, tab2 = st.tabs(["🧠 OrionAI", "🗃️ Logs"])
 
 with tab1:
 

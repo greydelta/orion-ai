@@ -132,14 +132,16 @@ async def analyze_file(request: Request):
         run_id = str(uuid4()),
         code = match["content"]
     )
-    # state = EngineerState(state)
     
     result = graph.invoke(state)
     raw_output = result.get("json_spec", "")
     cp.log_debug("🧠 Raw LLM Output:\n", raw_output)
 
     try:
-        parsed = json.loads(raw_output)
+        cp.log_debug("LLM Output type:\n", type(raw_output))
+        parsed = json.loads(raw_output) # if string
+        # parsed = raw_output # if not string
+
         cp.log_debug("🧠 Parsed LLM Output:\n", parsed)
         # parsed = json.loads(raw_output) if isinstance(raw_output, str) else raw_output
 
@@ -178,3 +180,6 @@ async def analyze_file(request: Request):
         return {"error": str(e)}
 
     return {"result": raw_output}
+
+if __name__ == "__main__":
+    cp.log_info("=========== Orion AI server ===========")
