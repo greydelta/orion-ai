@@ -22,7 +22,8 @@ b) ollama run llama3.2
 
 2. Launch MCP server
 a)  pipenv shell python -m
-    cd mcp-github
+    cd orion-ai
+    python -m pipenv shell
     uvicorn main:app --reload --port 8081
 
 3. Run app:

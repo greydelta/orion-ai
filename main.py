@@ -49,10 +49,11 @@ async def fetch_github_repo_code():
         url = f"https://api.github.com/repos/{GITHUB_REPO}/git/trees/main?recursive=1"
         response = await client.get(url, headers=headers)
         tree = response.json().get("tree", [])
-
+        # cp.log_info("Received response from GitHub API for repo code", tree)
         documents = []
         for file in tree:
-            if file["type"] == "blob" and file["path"].endswith((".py", ".js", ".java")):
+            if file["type"] == "blob" and file["path"].endswith((".py", ".js", ".jsx", ".html", ".java")):
+                cp.log_info(f"Fetching file: {file['path']}")
                 raw_url = f"https://raw.githubusercontent.com/{GITHUB_REPO}/main/{file['path']}"
                 file_resp = await client.get(raw_url)
                 documents.append({"name": file["path"], "content": file_resp.text})
@@ -125,6 +126,7 @@ async def analyze_file(request: Request):
     docs = await fetch_github_repo_code()
     match = next((doc for doc in docs if doc["name"] == filename), None)
     if not match:
+        cp.log_error(f"File {filename} not found in repository.")
         return JSONResponse(status_code=404, content={"error": "File not found"})
 
     cp.log_info("⚙️  engineer_task() called")
@@ -138,7 +140,7 @@ async def analyze_file(request: Request):
     cp.log_debug("🧠 Raw LLM Output:\n", raw_output)
 
     try:
-        cp.log_debug("LLM Output type:\n", type(raw_output))
+        # cp.log_debug("LLM Output type:\n", type(raw_output))
         parsed = json.loads(raw_output) # if string
         # parsed = raw_output # if not string
 

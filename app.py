@@ -18,10 +18,10 @@ except json.JSONDecodeError:
 
 # ^ --- App Configs ---
 st.set_page_config(layout="wide", page_title="OrionAI", page_icon="🚀")
+    
+st.title(":red[OrionAI]")
 
-st.sidebar.title(":red[OrionAI]")
-
-tab1, tab2 = st.tabs(["🧠 OrionAI", "🗃️ Logs"])
+tab1, tab2, tab3 = st.tabs(["🧠 OrionAI", "🗃️ Logs", "🔐 Env Vars"])
 
 with tab1:
 
@@ -31,13 +31,15 @@ with tab1:
 
     # ^ --- Sidebar Settings ---
     st.sidebar.title(":violet[GitHub Configs]")
-    gh_user = st.sidebar.selectbox("User name", "greydelta")
-    gh_repo = st.sidebar.selectbox("Repo name", "cyk")
+    gh_user = st.sidebar.text_input("User name", "greydelta")
+    gh_repo = st.sidebar.text_input("Repo name", "cyk")
 
     # & Milestone 1
     st.sidebar.title(":blue[v1]")
 
-    model = st.sidebar.selectbox("Select Model", OLLAMA_MODELS)
+    # model = st.sidebar.selectbox("Select Model", OLLAMA_MODELS)
+    model = "llama3.2"
+    st.sidebar.text(f"Selected Model: {model}")
     github_file = st.sidebar.text_input("GitHub File Path", "src/App.java")
     language = st.sidebar.text_input("Language", "Java")
 
@@ -145,3 +147,12 @@ with tab1:
 
 with tab2:
     render_tab2()
+
+
+with tab3:
+    # print app environment variables
+    st.title(":blue[Env variables]")
+    CUSTOM_ENV_KEYS = ["OLLAMA_URL", "OLLAMA_MODELS", "LOCAL_MCP_SERVER_URL", "GITHUB_REPO", "GITHUB_PERSONAL_ACCESS_TOKEN", "SUPABASE_DB_URL"]
+
+    filtered_env = {k: os.getenv(k) for k in CUSTOM_ENV_KEYS}
+    st.code(json.dumps(filtered_env, indent=2), language="json")

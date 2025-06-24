@@ -115,7 +115,3 @@ async def run_agent(file_name="Example.java", target_lang="Python"):
         })
         response = resp.json()["response"]
         cp.log_debug(f"\n🔁 Model Response:\n\n{response}")
-
-# if __name__ == "__main__":
-#     import asyncio
-#     asyncio.run(run_engineer_pipeline(file_name="src/App.java"))

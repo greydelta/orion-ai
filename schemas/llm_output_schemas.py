@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Any, List, Optional
 
 from pydantic import BaseModel
 class ParameterSchema(BaseModel):
@@ -20,8 +20,7 @@ class VariableSchema(BaseModel):
     description: str
 
 class EngineerOutputSchema(BaseModel):
-    functions: List[FunctionSchema]
-    variables: List[VariableSchema]
+    output: Optional[Any] = None
 
 
 # class UserStory(BaseModel):

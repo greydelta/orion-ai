@@ -1,3 +1,5 @@
+import json
+
 import streamlit as st
 import asyncio
 from database import fetch_data
@@ -44,7 +46,7 @@ def render_tab2():
         st.warning("No records found.")
         st.stop()
 
-    col1, col2, col3, col4, col5, col6, col7, col8 = st.columns([1, 1, 2, 1, 2, 1, 2, 1])
+    col1, col2, col3, col4, col5, col6, col7, col8 = st.columns([1, 1, 2, 1, 1, 1, 1, 1])
     col1.markdown("**Project/Run ID**")
     col2.markdown("**Cycle ID/Step**")
     col3.markdown("**Role**")
@@ -56,7 +58,7 @@ def render_tab2():
 
     # Table view with View buttons
     for idx, row in enumerate(rows):
-        col1, col2, col3, col4, col5, col6, col7, col8 = st.columns([1, 1, 2, 1, 2, 1, 2, 1])
+        col1, col2, col3, col4, col5, col6, col7, col8 = st.columns([1, 1, 2, 1, 1, 1, 1, 1])
         col1.markdown(
             f"<span style='color: gray;'>{row['project_id']}</span><br><strong>{row['run_id'][:8]}</strong>",
             unsafe_allow_html=True
@@ -105,7 +107,15 @@ def render_tab2():
                 st.code(v, language="text")
             elif (k == "validated_json"):
                 st.markdown(f"**{k}:**")
-                st.code(v, language="json")
+                if isinstance(v, dict):
+                    pretty = json.dumps(v, indent=2)
+                elif isinstance(v, str):
+                    try:
+                        parsed = json.loads(v)
+                        pretty = json.dumps(parsed, indent=2)
+                    except json.JSONDecodeError:
+                        pretty = v
+                st.code(pretty, language="json")
             else:
                 st.markdown(f"**{k}:** `{v}`")
 
