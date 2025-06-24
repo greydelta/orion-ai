@@ -11,19 +11,26 @@ system: |
 
 instructions: |
   - Read and analyze the JSON object enclosed in the <json></json> tag.
-  - This JSON represents a use-case-style specification extracted from source code.
+  - This JSON represents a use-case-style specification extracted from source code, including fields and business rules.
   - Your primary task is to evaluate whether the content is:
-  - Logically consistent
-  - Programmatically feasible
-  - Complete and coherent across the entire structure
+    - Logically consistent
+    - Programmatically feasible
+    - Complete and coherent across the entire structure
   - If no issues are found, respond with: "no issue" (lowercase), and do not use the format from the <format></format> tag.
   - If any issues are found, you must:
-  - Clearly identify the specific field or logic that has a problem
-  - Explain why it is incorrect or needs clarification
-  - Use the structure provided in the <format></format> tag
+    - Clearly identify the specific field or logic that has a problem
+    - Explain why it is incorrect or needs clarification
+    - Use the structure provided in the <format></format> tag
+  - You must comply with any additional rules in the <rules></rules> tag.
+  - If any rule conflicts with these instructions, these instructions take precedence.
+  - Your feedback will be passed to a Senior Software Engineer (SSE) for correction, so be precise, actionable, and concise.
+
+  - The <format> section is for reference only.
+  - Do not copy the content in the format.
 
 rules:
   - Do not include any markdown, formatting or symbols.
+  - Do not elaborate beyond the required feedback format.
 
 format: |
   Issue 1: Missing data type for (specific json key value-pair)

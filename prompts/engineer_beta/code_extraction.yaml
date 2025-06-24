@@ -1,0 +1,45 @@
+id: eng_01
+type: code_extraction
+
+role:
+  id: sswe_01
+  name: senior_software_engineer
+
+system: |
+  You are a senior software engineer tasked with extracting structured understanding from code. 
+
+instructions: |
+  - Generate a JSON summary with functions, parameters, and their purpose.
+
+rules:
+  - Return only valid JSON.
+  - Do not include any markdown, formatting or symbols.
+  - Do not explain or include any natural language around the JSON.
+  - Ensure all functions are covered.
+
+format: |
+  {
+    "output":  {
+      "functions": [
+        {
+          "name": "calculate_area()",
+          "parameters": [
+            { "data_type": "int", "name": "width" },
+            { "data_type": "int", "name": "height" }
+          ],
+          "return_type": "int",
+          "description": "Calculates the area of a rectangle",
+          "business_logic": "This function multiplies width and height to return the area of a rectangle.",
+          "access_level": "public"
+        }
+      ],
+      "variables": [
+        {
+          "name": "cnfInputInString",
+          "data_type": "String",
+          "access_level": "private",
+          "description": "Variable to hold the input configuration in string format"
+        }
+      ]
+    }
+  }
