@@ -4,6 +4,8 @@ import uuid
 import asyncpg
 from dotenv import load_dotenv
 
+import utils.color_print as cp
+
 load_dotenv()
 
 DB_URL = os.getenv("SUPABASE_DB_URL")
@@ -28,10 +30,11 @@ async def log_agent_step(data: dict):
             $15, $16
         )
     """,    data['project_id'], data['run_id'], data['cycle_id'], data['step_number'],
-            data['agent_id'], data['agent_role'], data.get('agent_desc', ''),
+            data['agent_id'], data['agent_role'], "N/A",
             data['llm_model_id'], data['llm_model_name'], data['prompt_id'], data['prompt_type'],
             data['raw_input'], data['raw_output'], data['validated_json'],
             data['confidence'], data['status'])
+    cp.log_info("Agent step logged successfully.")
     await conn.close()
 
 async def fetch_data(query: str):

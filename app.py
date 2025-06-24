@@ -32,7 +32,7 @@ with tab1:
     # ^ --- Sidebar Settings ---
     st.sidebar.title(":violet[GitHub Configs]")
     gh_user = st.sidebar.text_input("User name", "greydelta")
-    gh_repo = st.sidebar.text_input("Repo name", "cyk")
+    gh_repo = st.sidebar.text_input("Repo name", "react-node-test")
 
     # & Milestone 1
     st.sidebar.title(":blue[v1]")
@@ -40,8 +40,8 @@ with tab1:
     # model = st.sidebar.selectbox("Select Model", OLLAMA_MODELS)
     model = "llama3.2"
     st.sidebar.text(f"Selected Model: {model}")
-    github_file = st.sidebar.text_input("GitHub File Path", "src/App.java")
-    language = st.sidebar.text_input("Language", "Java")
+    github_file = st.sidebar.text_input("GitHub File Path", "frontend/src/App.jsx")
+    language = st.sidebar.text_input("Language", "Javascript")
 
     # & Milestone 2
     st.sidebar.title(":blue[v2]")

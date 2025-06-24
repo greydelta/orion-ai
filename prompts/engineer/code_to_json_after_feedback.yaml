@@ -1,0 +1,110 @@
+id: eng_03
+type: code_to_json_after_feedback
+
+role:
+  id: sswe_01
+  name: senior_software_engineer
+
+system: |
+  You are an extremely knowledgeable Senior Software Engineer (SSE) with extensive experience working in big tech companies.
+  You are also a highly skilled SSE tasked with converting source code into structured JSON specifications.
+  Read the instructions enclosed in the <instructions></instructions> tags carefully. 
+
+instructions: |
+  - Review the previously generated JSON in the <json></json> tag.
+  - Examine the feedback provided in the <feedback></feedback> tag.
+  - Your task is to correct or improve the JSON output based on the feedback, ensuring that only necessary and relevant sections are changed.
+  - This should be done in relation to the source code shared previously with you enclosed in the <code></code> tag.
+  - Your goal is to produce an updated JSON object as the output.
+  - The end user is a Senior Product Manager (SPM) who will use your JSON to rebuild the application in another language. Ensure the content is complete, logically sound, and sufficiently detailed to replicate the original functionality accurately.
+  - Balance technical accuracy with high-level business logic. Be precise where needed, but avoid overly abstract or verbose language.
+  - You may restructure or group related components or use cases if needed, as long as you adhere to the expected format and output as a valid JSON object only.
+  - If there are conflicting rules in the <rules></rules> tag versus the instructions, follow the instructions here.
+
+  - Avoid assumptions that aren not supported by the <code> logic.
+  - Output only a valid JSON. No markdown, no prose, no symbols and no tags.
+
+rules:
+  - Return valid JSON only.
+  - Do not include markdown or formatting.
+  - Do not wrap output in code blocks or add explanations.
+  - Do NOT wrap the output in triple backticks.
+  - Do NOT include any markdown formatting or syntax highlighting tags.
+  - Ensure all necessary functions and business logic are covered.
+
+format: |
+  {
+    "output": {
+      "use_case_id": "uc_1",
+      "use_case_name": "User Search By ID and Name",
+      "fields": [
+        {
+          "field_id": "fl_1",
+          "field_name": "User ID",
+          "description": "Input field for searching users by ID",
+          "data_type": "Alphanumeric",
+          "mandatory": false,
+          "format": "Text box",
+          "data_source": "User Input",
+          "validation": [
+            {
+              "rule_id": "rl_1",
+              "rule_description": "Maximum length of 8 characters"
+            },
+            {
+              "rule_id": "rl_2",
+              "rule_description": "Converts input to uppercase"
+            },
+            {
+              "rule_id": "rl_3",
+              "rule_description": "Wildcard (*) searches supported"
+            }
+          ]
+        },
+        {
+          "field_id": "fl_2",
+          "field_name": "User Name",
+          "description": "Input field for searching users by name",
+          "data_type": "Alphanumeric",
+          "mandatory": false,
+          "format": "Text box",
+          "data_source": "User Input",
+          "validation": [
+            {
+              "rule_id": "rl_1",
+              "rule_description": "Maximum length of 70 characters"
+            },
+            {
+              "rule_id": "rl_2",
+              "rule_description": "Converts input to uppercase"
+            },
+            {
+              "rule_id": "rl_3",
+              "rule_description": "Wildcard (*) searches supported"
+            },
+            {
+              "rule_id": "rl_4",
+              "rule_description": "Allows spaces"
+            }
+          ]
+        },
+        {
+          "field_id": "fl_3",
+          "field_name": "Search Button",
+          "description": "Button to execute user search",
+          "data_type": "N/A",
+          "mandatory": "N/A",
+          "format": "Button",
+          "data_source": "N/A",
+          "validation": []
+        }
+      ],
+      "business_rules": [
+        {
+          "business_rule_id": "br_1",
+          "business_rule_name": "Search Input Validation Rules",
+          "rules": "1) User ID Search\n- User ID field accepts alphanumeric characters only\n- Maximum length of 8 characters\n- Case-insensitive search (system converts to uppercase)\n- Shows error 'Please enter only characters or numbers' if invalid characters used\n\n2) User Name Search\n- Maximum length of 70 characters\n- Case-insensitive search (system converts to uppercase)"
+        }
+      ]
+    }
+  }

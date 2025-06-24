@@ -6,6 +6,12 @@
     "role": "senior_software_engineer",
     "system": "You are a senior software engineer tasked with extracting structured understanding from code.",
     "instructions": "Generate a JSON summary with functions, parameters, and their purpose.",
+    "rules": [
+      "Return only valid JSON.",
+      "Do not include any markdown, formatting or symbols.",
+      "Do not explain or include any natural language around the JSON.",
+      "Ensure all functions are covered."
+    ],
     "format": {
       "functions": [
         {
@@ -28,25 +34,182 @@
           "description": "Variable to hold the input configuration in string format"
         }
       ]
-    },
-    "rules": [
-      "Return only valid JSON.",
-      "Do not include any markdown, formatting or symbols.",
-      "Do not explain or include any natural language around the JSON.",
-      "Ensure all functions are covered."
-    ]
+    }
   },
   {
     "id": "eng_02",
-    "type": "code_extraction_after_feedback",
-    "system": "You are a senior software engineer tasked with extracting structured understanding from code.",
-    "instructions": "Based on the feedback, generate a JSON summary with functions, parameters, and their purpose.",
-    "format": {},
+    "type": "code_to_json",
+    "role_id": "sswe_01",
+    "role": "senior_software_engineer",
+    "system": "You are an extremely knowledgeable Senior Software Engineer (SSE) that have various experience working in big tech companies. Read the instructions enclosed in the <instructions></instructions> tags carefully.",
+    "instructions": "Your are to read and understand the source code enclosed in the <code></code> tag. Your primary objective is to convert and extract relevant info from the source code into a use-case format and output it as a json object. You must follow the example json output format enclosed in the <format></format> tag strictly, only the json key and input your info in the value. You must also comply with any additional rules that may apply in the <rules></rules> tag. If the rules from the <rules> tag clash logically with the instructions of this prompt then you must fall back to the instructions here. Your json output will be converted into a use case document so you have to keep in mind that the end user is a Senior Product Manager (SPM). Hence, the verbosity must be technically accurate for certain components and high level but not too abstract to the point it loses its meaning or business logic for other components, which you shall evaluate and decide at your discretion as a SSE. Your json output will be used by the SPM to rebuild the application or feature in another new language of their choice, hence the extracted info must be sufficient to replicate the same behaviour accurately. You may at any point during your analysis and task, combine or rewrite any part of your already computed or generated json object to group similar use cases or functions together at your discretion for the value field of the json, but you must still adhere to the desired format in the <format> tag. In the json, if there are any fields where the key suggests that it is an ID, you may generate a ID as you see fit.You must not include any markdown, symbols, or natural language elaboration in your output, only a valid JSON.",
     "rules": [
       "Return only valid JSON.",
       "Do not include any markdown, formatting or symbols.",
       "Do not explain or include any natural language around the JSON.",
       "Ensure all functions are covered."
-    ]
+    ],
+    "format": {
+      "output": {
+        "use_case_id": "uc_1",
+        "use_case_name": "User Search By ID and Name",
+        "fields": [
+          {
+            "field_id": "fl_1",
+            "field_name": "User ID",
+            "description": "Input field for searching users by ID",
+            "data_type": "Alphanumeric",
+            "mandatory": false,
+            "format": "Text box",
+            "data_source": "User Input",
+            "validation": [
+              {
+                "rule_id": "rl_1",
+                "rule_description": "Maximum length of 8 characters"
+              },
+              {
+                "rule_id": "rl_2",
+                "rule_description": "Converts input to uppercase"
+              },
+              {
+                "rule_id": "rl_3",
+                "rule_description": "Wildcard (*) searches supported"
+              }
+            ]
+          },
+          {
+            "field_id": "fl_2",
+            "field_name": "User Name",
+            "description": "Input field for searching users by name",
+            "data_type": "Alphanumeric",
+            "mandatory": false,
+            "format": "Text box",
+            "data_source": "User Input",
+            "validation": [
+              {
+                "rule_id": "rl_1",
+                "rule_description": "Maximum length of 70 characters"
+              },
+              {
+                "rule_id": "rl_2",
+                "rule_description": "Converts input to uppercase"
+              },
+              {
+                "rule_id": "rl_3",
+                "rule_description": "Wildcard (*) searches supported"
+              },
+              {
+                "rule_id": "rl_4",
+                "rule_description": "Allows spaces"
+              }
+            ]
+          },
+          {
+            "field_id": "fl_3",
+            "field_name": "Search Button",
+            "description": "Button to execute user search",
+            "data_type": "N/A",
+            "mandatory": "N/A",
+            "format": "Button",
+            "data_source": "N/A",
+            "validation": []
+          }
+        ],
+        "business_rules": [
+          {
+            "business_rule_id": "br_1",
+            "business_rule_name": "Search Input Validation Rules",
+            "rules": "1) User ID Search\n- User ID field accepts alphanumeric characters only\n- Maximum length of 8 characters\n- Case-insensitive search (system converts to uppercase)\n- Shows error 'Please enter only characters or numbers' if invalid characters used\n\n2) User Name Search\n- Maximum length of 70 characters\n- Case-insensitive search (system converts to uppercase)"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "id": "eng_03",
+    "type": "code_to_json_after_feedback",
+    "system": "You are an extremely knowledgeable Senior Software Engineer (SSE) that have various experience working in big tech companies. Read the instructions enclosed in the <instructions></instructions> tags carefully.",
+    "instructions": "Your are to read and understand the source code enclosed in the <code></code> tag. The goal is to convert and extract relevant info from the source code into a use-case format and output it as a json object. You must follow the example json output format enclosed in the <format></format> tag strictly, only the json key and input your info in the value. You must also comply with any additional rules that may apply in the <rules></rules> tag. If the rules from the <rules> tag clash logically with the instructions of this prompt then you must fall back to the instructions here. Additionally, you have previously generated the json output in the <json></json> tag and there are some issues with it enclosed in <feedback></feedback>. Your are to review the issues enclosed in <feedback> tag, review and regenerate the parts where there is an issue. Your json output will be converted into a use case document so you have to keep in mind that the end user is a Senior Product Manager (SPM). Hence, the verbosity must be technically accurate for certain components and high level but not too abstract to the point it loses its meaning or business logic for other components, which you shall evaluate and decide at your discretion as a SSE. Your json output will be used by the SPM to rebuild the application or feature in another new language of their choice, hence the extracted info must be sufficient to replicate the same behaviour accurately. You may at any point during your analysis and task, retain, combine or rewrite any part of your already computed or generated json object to group similar use cases or functions together at your discretion for the value field of the json, but you must still adhere to the desired format in the <format> tag.You must not include any markdown, symbols, or natural language elaboration in your output, only a valid JSON.",
+    "rules": [
+      "Return only valid JSON.",
+      "Do not include any markdown, formatting or symbols.",
+      "Do not explain or include any natural language around the JSON.",
+      "Ensure all functions are covered."
+    ],
+    "format": {
+      "output": {
+        "use_case_id": "uc_1",
+        "use_case_name": "User Search By ID and Name",
+        "fields": [
+          {
+            "field_id": "fl_1",
+            "field_name": "User ID",
+            "description": "Input field for searching users by ID",
+            "data_type": "Alphanumeric",
+            "mandatory": false,
+            "format": "Text box",
+            "data_source": "User Input",
+            "validation": [
+              {
+                "rule_id": "rl_1",
+                "rule_description": "Maximum length of 8 characters"
+              },
+              {
+                "rule_id": "rl_2",
+                "rule_description": "Converts input to uppercase"
+              },
+              {
+                "rule_id": "rl_3",
+                "rule_description": "Wildcard (*) searches supported"
+              }
+            ]
+          },
+          {
+            "field_id": "fl_2",
+            "field_name": "User Name",
+            "description": "Input field for searching users by name",
+            "data_type": "Alphanumeric",
+            "mandatory": false,
+            "format": "Text box",
+            "data_source": "User Input",
+            "validation": [
+              {
+                "rule_id": "rl_1",
+                "rule_description": "Maximum length of 70 characters"
+              },
+              {
+                "rule_id": "rl_2",
+                "rule_description": "Converts input to uppercase"
+              },
+              {
+                "rule_id": "rl_3",
+                "rule_description": "Wildcard (*) searches supported"
+              },
+              {
+                "rule_id": "rl_4",
+                "rule_description": "Allows spaces"
+              }
+            ]
+          },
+          {
+            "field_id": "fl_3",
+            "field_name": "Search Button",
+            "description": "Button to execute user search",
+            "data_type": "N/A",
+            "mandatory": "N/A",
+            "format": "Button",
+            "data_source": "N/A",
+            "validation": []
+          }
+        ],
+        "business_rules": [
+          {
+            "business_rule_id": "br_1",
+            "business_rule_name": "Search Input Validation Rules",
+            "rules": "1) User ID Search\n- User ID field accepts alphanumeric characters only\n- Maximum length of 8 characters\n- Case-insensitive search (system converts to uppercase)\n- Shows error 'Please enter only characters or numbers' if invalid characters used\n\n2) User Name Search\n- Maximum length of 70 characters\n- Case-insensitive search (system converts to uppercase)"
+          }
+        ]
+      }
+    }
   }
 ]

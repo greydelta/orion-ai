@@ -97,9 +97,9 @@ def validate_engineer_json(state: EngineerState) -> EngineerState:
 
 def product_manager_task(state: EngineerState) -> EngineerState:
     cp.log_info("🔍 product_manager_task() called")
-    prompt_type = "json_review"
+    prompt_type = "review_json"
 
-    prompt, prompt_id = prompt_lib.build_prompt("product_manager", prompt_type, code=state.code, json_output=state.json_spec)
+    prompt, prompt_id = prompt_lib.build_prompt("product_manager", prompt_type, json_output=state.json_spec)
     role, role_id = prompt_lib.get_role_details("product_manager", prompt_type)
 
     feedback = llm.invoke(prompt)
@@ -111,52 +111,53 @@ def product_manager_task(state: EngineerState) -> EngineerState:
         "agent": {"id": role_id, "role": role}
     })
 
-    cp.log_debug("feedback:", feedback.lower())
-
     if "no issue" in feedback.lower():
         cp.log_info("✅ Reviewer approved output.")
+        final_state = updated_state.model_copy(update={
+            "reviewer_feedback": None,
+            "validated_output": state.validated_output
+        })
+
         asyncio.create_task(log_agent_step({
-            "project_id": state.project_id,
-            "run_id": state.run_id,
-            "cycle_id": str(state.cycle_id),
-            "step_number": state.step_number,
-            "agent_id": state.agent["id"],
-            "agent_role": state.agent["role"],
-            "llm_model_id": state.model["id"],
-            "llm_model_name": state.model["name"],
-            "prompt_id": state.prompt["id"],
-            "prompt_type": state.prompt["type"],
-            "raw_input": state.prompt["input"],
-            "raw_output": state.json_spec,
-            "validated_json": state.json_spec,
+            "project_id": final_state.project_id,
+            "run_id": final_state.run_id,
+            "cycle_id": str(final_state.cycle_id),
+            "step_number": final_state.step_number,
+            "agent_id": final_state.agent["id"],
+            "agent_role": final_state.agent["role"],
+            "llm_model_id": final_state.model["id"],
+            "llm_model_name": final_state.model["name"],
+            "prompt_id": final_state.prompt["id"],
+            "prompt_type": final_state.prompt["type"],
+            "raw_input": final_state.prompt["input"],
+            "raw_output": final_state.json_spec,
+            "validated_json": final_state.json_spec,
             "confidence": None,
             "status": "passed"
         }))
-        return state
+
+        return final_state
 
     else:
         cp.log_warn("❌ Reviewer suggests rework based on quality.")
-        asyncio.create_task(
-            log_agent_step({
-                "project_id": state.project_id,
-                "run_id": state.run_id,
-                "cycle_id": str(state.cycle_id),
-                "step_number": state.step_number,
 
-                "agent_id": state.agent["id"],
-                "agent_role": state.agent["role"],
-                "llm_model_id": state.model["id"],
-                "llm_model_name": state.model["name"],
-                "prompt_id": state.prompt["id"],
-                "prompt_type": state.prompt["type"],
-                "raw_input": state.prompt["input"],
-
-                "raw_output": state.json_spec,
-                "validated_json": state.json_spec,
-                "confidence": None,
-                "status": "failed"
-            }
-        ))
+        asyncio.create_task(log_agent_step({
+            "project_id": updated_state.project_id,
+            "run_id": updated_state.run_id,
+            "cycle_id": str(updated_state.cycle_id),
+            "step_number": updated_state.step_number,
+            "agent_id": updated_state.agent["id"],
+            "agent_role": updated_state.agent["role"],
+            "llm_model_id": updated_state.model["id"],
+            "llm_model_name": updated_state.model["name"],
+            "prompt_id": updated_state.prompt["id"],
+            "prompt_type": updated_state.prompt["type"],
+            "raw_input": updated_state.prompt["input"],
+            "raw_output": updated_state.json_spec,
+            "validated_json": updated_state.json_spec,
+            "confidence": None,
+            "status": "failed"
+        }))
 
         return updated_state.model_copy(update={
             "reviewer_feedback": feedback,

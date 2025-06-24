@@ -46,15 +46,15 @@ async def run_engineer_pipeline(file_name):
 
     try:
         parsed = json.loads(raw_output)
-        functions = parsed.get("functions", [])
-        cp.log_info(f"\n🔍 Found {len(functions)} functions:")
+        # functions = parsed.get("functions", [])
+        # cp.log_info(f"\n🔍 Found {len(functions)} functions:")
 
-        for idx, func in enumerate(functions, start=1):
-            cp.log_info(f"Function {idx}:")
-            cp.log_info("  Name:", func.get("name"))
-            cp.log_info("  Parameters:", ", ".join(func.get("parameters", [])))
-            cp.log_info("  Description:", func.get("description"))
-            cp.log_info()
+        # for idx, func in enumerate(functions, start=1):
+        #     cp.log_info(f"Function {idx}:")
+        #     cp.log_info("  Name:", func.get("name"))
+        #     cp.log_info("  Parameters:", ", ".join(func.get("parameters", [])))
+        #     cp.log_info("  Description:", func.get("description"))
+        #     cp.log_info()
     except Exception as e:
         cp.log_error(f"❌ Failed to parse LLM output: {e}")
         return {"error": str(e)}

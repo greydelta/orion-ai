@@ -31,7 +31,7 @@ def render_tab2():
             created_at  
         FROM temp_agent_step
         ORDER BY created_at DESC
-        LIMIT 10
+        LIMIT 20
     """)
 
     # Run asyncpg query

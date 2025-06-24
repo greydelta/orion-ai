@@ -1,6 +1,8 @@
 import json
+import yaml
+import textwrap
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union
 
 import utils.color_print as cp
 
@@ -10,62 +12,115 @@ class PromptLibrary:
 
     def get_prompt_template(self, role: str, prompt_type: str = None) -> dict:
         """Load and optionally select a specific prompt template for a given role."""
-        path = self.base_path / f"{role}.json"
-        if not path.exists():
-            raise FileNotFoundError(f"Prompt file for role '{role}' not found: {path}")
-        
-        templates = json.loads(path.read_text())
+        cp.log_debug(f"Loading prompt template for role: {role}, type: {prompt_type}")
 
-        if isinstance(templates, list):
-            if prompt_type:
-                for tpl in templates:
-                    if tpl.get("type") == prompt_type:
-                        return tpl
-                raise ValueError(f"No prompt with type '{prompt_type}' found in {path}")
-            else:
-                return templates[0]  # default to first
-        elif isinstance(templates, dict):
-            return templates  # single template form
+        folder = self.base_path / role
+        yaml_path = folder / f"{prompt_type}.yaml"
+
+        if yaml_path.exists():
+            cp.log_debug(f"Reading YAML prompt: {yaml_path}")
+            with open(yaml_path, 'r', encoding='utf-8') as f:
+                templates = yaml.safe_load(f)
         else:
-            raise ValueError(f"Invalid format in {path}")
+            raise FileNotFoundError(f"Prompt file for role '{role}' and type '{prompt_type}' not found in {folder}")
 
-    def build_prompt(self, role: str, prompt_type: str, code: str) -> tuple[str, str]:
+        if isinstance(templates, dict):
+            return templates
+        elif isinstance(templates, list):
+            # This is rare in YAML unless you're batching multiple prompt templates
+            for tpl in templates:
+                if tpl.get("type") == prompt_type:
+                    return tpl
+            raise ValueError(f"No prompt with type '{prompt_type}' found in list")
+        else:
+            raise ValueError(f"Invalid YAML structure in {yaml_path}")
+
+    def build_prompt(self, role: str, prompt_type: str, code: Optional[str] = "", json_output: Optional[Union[str, dict]] = None, feedback: Optional[str] = "") -> tuple[str, str]:
         cp.log_info(f"Building prompt for role: {role}")
-        """Render a complete prompt from the template, filling in the code and example JSON."""
 
-        json_prompt = self.get_prompt_template(role, prompt_type)
-        prompt_id = json_prompt.get("id", "unknown")
+        prompt = self.get_prompt_template(role, prompt_type)
+        prompt_id = prompt.get("id", "unknown")
 
-        system = json_prompt.get("system", "")
-        instructions = json_prompt.get("instructions", "")
-        rules = json_prompt.get("rules", [])
-        example_json = json_prompt.get("format", {})
+        system = prompt.get("system", "")
+        instructions = prompt.get("instructions", "")
+        rules = prompt.get("rules", [])
+        example_format = prompt.get("format", {})
+
+        code_section = ""
+        if code:
+            code_section = f"""
+            <code>
+            {code}
+            </code>
+            """
+
+        json_section = ""
+        if json_output:
+            try:
+                if isinstance(json_output, dict):
+                    json_str = json.dumps(json_output, indent=2, ensure_ascii=False)
+                elif isinstance(json_output, str):
+                    # json_str = json_output.encode("utf-8", errors="replace").decode("utf-8")
+                    try:
+                        parsed = json.loads(json_output)
+                        json_str = json.dumps(parsed, indent=2, ensure_ascii=False)
+                    except json.JSONDecodeError:
+                        json_str = json_output
+                else:
+                    raise ValueError("json_output must be a dict or str")
+
+                json_section = f"""
+                <json>
+                {json_str}
+                </json>
+                """
+            except Exception as e:
+                cp.log_error(f"⚠️ Error building json_section: {e}")
+                json_section = "<json>[UNABLE TO SERIALIZE OUTPUT]</json>"
+
+        feedback_section = ""
+        if feedback:
+            feedback_section = f"""
+            <feedback>
+            {feedback}
+            </feedback>
+            """
 
         formatted_prompt = f"""
             {system}
 
-            Instructions:
+            <instructions>
             {instructions}
+            </instructions>
 
-            Example Output Format:
-            {json.dumps(example_json, indent=2)}
-
-            Rules:
+            <rules>
             - {'\n- '.join(rules)}
+            </rules>
 
-            Code:
-            {code}
-        """
+            {code_section}
+
+            {json_section}
+
+            {feedback_section}
+
+            <format>
+            {example_format}
+            </format>
+        """.strip()
+
         cp.log_debug(f"📜 Prompt for role '{role}':\n{formatted_prompt}")
         return formatted_prompt, prompt_id
 
     def get_role_details(self, role: str, prompt_type: str) -> tuple[str, str]:
-        json_prompt = self.get_prompt_template(role, prompt_type)
-        role = json_prompt.get("role", "unknown")
-        role_id = json_prompt.get("role_id", "")
-        cp.log_info(f"Retrieved role '{role}' with ID '{role_id}' for prompt type '{prompt_type}'")
-        return role, role_id
+        prompt = self.get_prompt_template(role, prompt_type)
+
+        role_obj = prompt.get("role", {})
+        role_name = role_obj.get("name", "unknown")
+        role_id = role_obj.get("id", "")
+ 
+        cp.log_info(f"Retrieved role '{role_name}' with ID '{role_id}' for prompt type '{prompt_type}'")
+        return role_name, role_id
 
     def available_roles(self) -> list:
         """List all available roles in the prompt library."""
-        return [f.stem for f in self.base_path.glob("*.json") if f.is_file()]
+        return [f.stem for f in self.base_path.glob("*.yaml") if f.is_file()]

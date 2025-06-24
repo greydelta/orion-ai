@@ -55,7 +55,7 @@ async def fetch_github_repo_code():
             if file["type"] == "blob" and file["path"].endswith((".py", ".js", ".jsx", ".html", ".java")):
                 cp.log_info(f"Fetching file: {file['path']}")
                 raw_url = f"https://raw.githubusercontent.com/{GITHUB_REPO}/main/{file['path']}"
-                file_resp = await client.get(raw_url)
+                file_resp = await client.get(raw_url, headers=headers)
                 documents.append({"name": file["path"], "content": file_resp.text})
         return documents
 
@@ -147,35 +147,35 @@ async def analyze_file(request: Request):
         cp.log_debug("🧠 Parsed LLM Output:\n", parsed)
         # parsed = json.loads(raw_output) if isinstance(raw_output, str) else raw_output
 
-        functions = parsed.get("functions", [])
-        cp.log_info(f"\n🔍 Found {len(functions)} functions:")
+        # functions = parsed.get("functions", [])
+        # cp.log_info(f"\n🔍 Found {len(functions)} functions:")
 
-        for idx, func in enumerate(functions, start = 1):
-            cp.log_info(f"Function {idx}:")
-            cp.log_info("  Name:", func.get("name"))
+        # for idx, func in enumerate(functions, start = 1):
+        #     cp.log_info(f"Function {idx}:")
+        #     cp.log_info("  Name:", func.get("name"))
 
-            params = func.get("parameters", [])
-            if params and isinstance(params[0], dict):
-                param_str = ", ".join(
-                    f"{p.get('type', '')} {p.get('name', '')}" for p in params
-                )
-            else:
-                param_str = ", ".join(params)
-            cp.log_info("  Parameters:", param_str)
+        #     params = func.get("parameters", [])
+        #     if params and isinstance(params[0], dict):
+        #         param_str = ", ".join(
+        #             f"{p.get('type', '')} {p.get('name', '')}" for p in params
+        #         )
+        #     else:
+        #         param_str = ", ".join(params)
+        #     cp.log_info("  Parameters:", param_str)
 
-            cp.log_info("  Description:", func.get("description"))
-            cp.log_info()
+        #     cp.log_info("  Description:", func.get("description"))
+        #     cp.log_info()
 
-        variables = parsed.get("variables", [])
-        cp.log_info(f"\n🔍 Found {len(variables)} variables:")
+        # variables = parsed.get("variables", [])
+        # cp.log_info(f"\n🔍 Found {len(variables)} variables:")
 
-        for idx, var in enumerate(variables, start = 1):
-            cp.log_info(f"Variables {idx}:")
-            cp.log_info("  Name:", var.get("name"))
-            cp.log_info("  Data Type:", var.get("data_type"))
-            cp.log_info("  Access Level:", var.get("access_level"))
-            cp.log_info("  Description:", var.get("description"))
-            cp.log_info()
+        # for idx, var in enumerate(variables, start = 1):
+        #     cp.log_info(f"Variables {idx}:")
+        #     cp.log_info("  Name:", var.get("name"))
+        #     cp.log_info("  Data Type:", var.get("data_type"))
+        #     cp.log_info("  Access Level:", var.get("access_level"))
+        #     cp.log_info("  Description:", var.get("description"))
+        #     cp.log_info()
 
     except Exception as e:
         cp.log_error(f"❌ Failed to parse LLM output: {e}")
