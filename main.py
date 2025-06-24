@@ -132,7 +132,8 @@ async def analyze_file(request: Request):
     cp.log_info("⚙️  engineer_task() called")
     state = EngineerState(
         run_id = str(uuid4()),
-        code = match["content"]
+        code = match["content"],
+        file_path = filename,
     )
     
     result = graph.invoke(state)
@@ -140,48 +141,40 @@ async def analyze_file(request: Request):
     cp.log_debug("🧠 Raw LLM Output:\n", raw_output)
 
     try:
-        # cp.log_debug("LLM Output type:\n", type(raw_output))
-        parsed = json.loads(raw_output) # if string
-        # parsed = raw_output # if not string
-
+        parsed = json.loads(raw_output)
         cp.log_debug("🧠 Parsed LLM Output:\n", parsed)
-        # parsed = json.loads(raw_output) if isinstance(raw_output, str) else raw_output
-
-        # functions = parsed.get("functions", [])
-        # cp.log_info(f"\n🔍 Found {len(functions)} functions:")
-
-        # for idx, func in enumerate(functions, start = 1):
-        #     cp.log_info(f"Function {idx}:")
-        #     cp.log_info("  Name:", func.get("name"))
-
-        #     params = func.get("parameters", [])
-        #     if params and isinstance(params[0], dict):
-        #         param_str = ", ".join(
-        #             f"{p.get('type', '')} {p.get('name', '')}" for p in params
-        #         )
-        #     else:
-        #         param_str = ", ".join(params)
-        #     cp.log_info("  Parameters:", param_str)
-
-        #     cp.log_info("  Description:", func.get("description"))
-        #     cp.log_info()
-
-        # variables = parsed.get("variables", [])
-        # cp.log_info(f"\n🔍 Found {len(variables)} variables:")
-
-        # for idx, var in enumerate(variables, start = 1):
-        #     cp.log_info(f"Variables {idx}:")
-        #     cp.log_info("  Name:", var.get("name"))
-        #     cp.log_info("  Data Type:", var.get("data_type"))
-        #     cp.log_info("  Access Level:", var.get("access_level"))
-        #     cp.log_info("  Description:", var.get("description"))
-        #     cp.log_info()
-
     except Exception as e:
         cp.log_error(f"❌ Failed to parse LLM output: {e}")
         return {"error": str(e)}
 
     return {"result": raw_output}
+
+@app.post("/analyze-all")
+async def analyze_all_files():
+    docs = await fetch_github_repo_code()
+    results = []
+
+    for doc in docs:
+        filename = doc["name"]
+        content = doc["content"]
+
+        cp.log_info(f"⚙️ Running engineer pipeline for: {filename}")
+        state = EngineerState(
+            run_id = str(uuid4()),
+            code = content,
+            file_path=filename
+        )
+
+        try:
+            result = graph.invoke(state)
+            raw_output = result.get("json_spec", "")
+            parsed = json.loads(raw_output)
+            results.append({"filename": filename, "result": parsed})
+        except Exception as e:
+            cp.log_error(f"❌ Error analyzing {filename}: {e}")
+            results.append({"filename": filename, "error": str(e)})
+
+    return {"results": results}
 
 if __name__ == "__main__":
     cp.log_info("=========== Orion AI server ===========")

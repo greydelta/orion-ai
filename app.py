@@ -121,6 +121,29 @@ with tab1:
         with st.chat_message("assistant"):
             st.markdown("🧠 LangGraph Output")
             st.code(analysis, language="json")
+    
+    if st.button("Analyze All Files"):
+        with st.spinner("Analyzing all files..."):
+            try:
+                response = httpx.post(
+                    f"{LOCAL_MCP_SERVER_URL}/analyze-all",
+                    timeout=600  # increase timeout for many files
+                )
+                response.raise_for_status()
+                raw = response.text
+                cp.log_debug("📤 Raw LangGraph HTTP response (all files):", raw)
+
+                data = json.loads(raw)
+                results = data.get("results", [])
+                for res in results:
+                    st.markdown(f"📁 `{res.get('filename')}`")
+                    if "result" in res:
+                        st.code(json.dumps(res["result"], indent=2), language="json")
+                    else:
+                        st.error(f"❌ Error: {res.get('error')}")
+            except Exception as e:
+                st.error(f"❌ Error triggering analysis: {e}")
+
 
     if st.button("Get top language analysis"):
         try:

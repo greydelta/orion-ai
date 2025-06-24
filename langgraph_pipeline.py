@@ -27,9 +27,10 @@ llm = OllamaLLM(model="llama3.2")
 
 # LangGraph State
 class EngineerState(BaseModel):
-    project_id: str = "beta"
+    project_id: str = "charlie"
     run_id: str
     cycle_id: int = 0
+    file_path: Optional[str] = None
     
     step_number: int = 0
     retry_count: int = 0
@@ -53,12 +54,16 @@ def engineer_task(state: EngineerState) -> EngineerState:
     prompt, prompt_id = prompt_lib.build_prompt("engineer", prompt_type, code=state.code, feedback=state.reviewer_feedback)
     role, role_id = prompt_lib.get_role_details("engineer", prompt_type)
 
-    response = llm.invoke(prompt)
+    model_config = {"temperature": 0.2, "top_p": 1.0}
+    response = llm.invoke(
+        prompt,
+        model_config
+    )
     cp.log_debug('response from LLM:', response)
 
     return state.model_copy(update={
         "prompt": {"id": prompt_id, "type": prompt_type, "input": prompt},
-        "model": {"id": "1", "name": "llama3.2"},
+        "model": {"id": "1", "name": "llama3.2", "temperature": model_config["temperature"], "top_p": model_config["top_p"]},
         "agent": {"id": role_id, "role": role},
         "json_spec": response,
         "step_number": 0,
@@ -80,6 +85,8 @@ def validate_engineer_json(state: EngineerState) -> EngineerState:
                 "agent_role": state.agent["role"],
                 "llm_model_id": state.model["id"],
                 "llm_model_name": state.model["name"],
+                "llm_model_temperature": state.model["temperature"],
+                "llm_model_top_p": state.model["top_p"],
                 "prompt_id": state.prompt["id"],
                 "prompt_type": state.prompt["type"],
                 "raw_input": state.prompt["input"],
@@ -102,12 +109,16 @@ def product_manager_task(state: EngineerState) -> EngineerState:
     prompt, prompt_id = prompt_lib.build_prompt("product_manager", prompt_type, json_output=state.json_spec)
     role, role_id = prompt_lib.get_role_details("product_manager", prompt_type)
 
-    feedback = llm.invoke(prompt)
+    model_config = {"temperature": 0.5, "top_p": 1.0}
+    feedback = llm.invoke(
+        prompt,
+        model_config
+    )
     cp.log_debug("📝 Reviewer feedback:", feedback)
 
     updated_state = state.model_copy(update={
         "prompt": {"id": prompt_id, "type": prompt_type, "input": prompt},
-        "model": {"id": "1", "name": "llama3.2"},
+        "model": {"id": "1", "name": "llama3.2", "temperature": model_config["temperature"], "top_p": model_config["top_p"]},
         "agent": {"id": role_id, "role": role}
     })
 
@@ -127,6 +138,8 @@ def product_manager_task(state: EngineerState) -> EngineerState:
             "agent_role": final_state.agent["role"],
             "llm_model_id": final_state.model["id"],
             "llm_model_name": final_state.model["name"],
+            "llm_model_temperature": final_state.model["temperature"],
+            "llm_model_top_p": final_state.model["top_p"],
             "prompt_id": final_state.prompt["id"],
             "prompt_type": final_state.prompt["type"],
             "raw_input": final_state.prompt["input"],
@@ -150,6 +163,8 @@ def product_manager_task(state: EngineerState) -> EngineerState:
             "agent_role": updated_state.agent["role"],
             "llm_model_id": updated_state.model["id"],
             "llm_model_name": updated_state.model["name"],
+            "llm_model_temperature": updated_state.model["temperature"],
+            "llm_model_top_p": updated_state.model["top_p"],
             "prompt_id": updated_state.prompt["id"],
             "prompt_type": updated_state.prompt["type"],
             "raw_input": updated_state.prompt["input"],
