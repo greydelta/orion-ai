@@ -20,8 +20,9 @@ except json.JSONDecodeError:
 st.set_page_config(layout="wide", page_title="OrionAI", page_icon="🚀")
     
 st.title(":red[OrionAI]")
+is_repo_analysis = False
 
-tab1, tab2, tab3 = st.tabs(["🧠 OrionAI", "🗃️ Logs", "🔐 Env Vars"])
+tab1, tab2, tab3 = st.tabs(["🧠 Convert", "🗃️ Logs", "🔐 Env Vars"])
 
 with tab1:
 
@@ -40,7 +41,7 @@ with tab1:
     # model = st.sidebar.selectbox("Select Model", OLLAMA_MODELS)
     model = "llama3.2"
     st.sidebar.text(f"Selected Model: {model}")
-    github_file = st.sidebar.text_input("GitHub File Path", "frontend/src/App.jsx")
+    single_file = st.sidebar.text_input("GitHub File Path", "frontend/src/App.jsx")
     language = st.sidebar.text_input("Language", "Javascript")
 
     # & Milestone 2
@@ -63,7 +64,7 @@ with tab1:
     senior_engineer_model = st.sidebar.selectbox("Select Senior Engineer Model", OLLAMA_MODELS)
 
     # ^ --- Header ---
-    st.title("OrionAI: Code to Docs")
+    st.title("Code to Docs")
     st.markdown("Select a model and GitHub repository to start analyzing. ")
 
     # Chat Display
@@ -72,39 +73,36 @@ with tab1:
             st.markdown(msg["content"])
 
     # Chat Input
-    user_input = st.chat_input("Type your message...")
-    if user_input:
-        # Save user message
-        st.session_state.chat_history.append({"role": "user", "content": user_input})
-        with st.chat_message("user"):
-            st.markdown(user_input)
+    # user_input = st.chat_input("Type your message...")
+    # if user_input:
+    #     st.session_state.chat_history.append({"role": "user", "content": user_input})
+    #     with st.chat_message("user"):
+    #         st.markdown(user_input)
 
-        # Call MCP server
-        try:
-            response = httpx.post(
-                f"{LOCAL_MCP_SERVER_URL}/chat",
-                json={
-                    "model": model,
-                    "file_path": github_file,
-                    "message": user_input,
-                },
-                timeout=30.0
-            )
-            response.raise_for_status()
-            reply = response.json().get("response", "⚠️ No response from MCP.")
-        except Exception as e:
-            reply = f"❌ Error: {e}"
+    #     try:
+    #         response = httpx.post(
+    #             f"{LOCAL_MCP_SERVER_URL}/chat",
+    #             json={
+    #                 "model": model,
+    #                 "file_path": single_file,
+    #                 "message": user_input,
+    #             },
+    #             timeout=30.0
+    #         )
+    #         response.raise_for_status()
+    #         reply = response.json().get("response", "⚠️ No response from MCP.")
+    #     except Exception as e:
+    #         reply = f"❌ Error: {e}"
 
-        # Save assistant response
-        st.session_state.chat_history.append({"role": "assistant", "content": reply})
-        with st.chat_message("assistant"):
-            st.markdown(reply)
+    #     st.session_state.chat_history.append({"role": "assistant", "content": reply})
+    #     with st.chat_message("assistant"):
+    #         st.markdown(reply)
 
-    if st.button("Analyze Code"):
+    if st.button(f"Analyze :blue[{single_file}]"):
         try:
             response = httpx.post(
                 f"{LOCAL_MCP_SERVER_URL}/analyze",
-                json={"filename": github_file, "language": language},
+                json={"filename": single_file, "language": language},
                 timeout=300
             )
             response.raise_for_status()
@@ -122,7 +120,8 @@ with tab1:
             st.markdown("🧠 LangGraph Output")
             st.code(analysis, language="json")
     
-    if st.button("Analyze All Files"):
+    if st.button(f"Analyze Entire Repo :blue[{gh_user}/{gh_repo}]"):
+        is_repo_analysis = True
         with st.spinner("Analyzing all files..."):
             try:
                 response = httpx.post(
@@ -145,7 +144,7 @@ with tab1:
                 st.error(f"❌ Error triggering analysis: {e}")
 
 
-    if st.button("Get top language analysis"):
+    if st.button(f"Get top language for :blue[{gh_user}/{gh_repo}]"):
         try:
             response = httpx.post(
                 f"{LOCAL_MCP_SERVER_URL}/top-languages",
@@ -169,7 +168,7 @@ with tab1:
 
 
 with tab2:
-    render_tab2()
+    render_tab2(is_repo_analysis)
 
 
 with tab3:

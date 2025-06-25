@@ -154,13 +154,14 @@ async def analyze_all_files():
     docs = await fetch_github_repo_code()
     results = []
 
+    run_id = str(uuid4())
     for doc in docs:
         filename = doc["name"]
         content = doc["content"]
 
         cp.log_info(f"⚙️ Running engineer pipeline for: {filename}")
         state = EngineerState(
-            run_id = str(uuid4()),
+            run_id = run_id,
             code = content,
             file_path=filename
         )

@@ -29,7 +29,7 @@ llm = OllamaLLM(model="llama3.2")
 class EngineerState(BaseModel):
     project_id: str = "charlie"
     run_id: str
-    cycle_id: int = 0
+    cycle_id: int = 1
     file_path: Optional[str] = None
     
     step_number: int = 0
@@ -94,6 +94,7 @@ def validate_engineer_json(state: EngineerState) -> EngineerState:
                 "raw_output": state.json_spec,
                 "validated_json": state.json_spec,
                 "confidence": None,
+                "file_path": state.file_path,
                 "status": "generated"
             }
         ))
@@ -146,6 +147,7 @@ def product_manager_task(state: EngineerState) -> EngineerState:
             "raw_output": final_state.json_spec,
             "validated_json": final_state.json_spec,
             "confidence": None,
+            "file_path": state.file_path,
             "status": "passed"
         }))
 
@@ -171,6 +173,7 @@ def product_manager_task(state: EngineerState) -> EngineerState:
             "raw_output": updated_state.json_spec,
             "validated_json": updated_state.json_spec,
             "confidence": None,
+            "file_path": state.file_path,
             "status": "failed"
         }))
 
