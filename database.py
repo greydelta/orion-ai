@@ -14,6 +14,7 @@ async def get_db_conn():
     return await asyncpg.connect(DB_URL)
 
 async def log_agent_step(data: dict):
+    
     conn = await get_db_conn()
     await conn.execute("""
         INSERT INTO temp_agent_step (

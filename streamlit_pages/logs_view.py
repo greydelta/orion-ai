@@ -2,8 +2,9 @@ import json
 
 import streamlit as st
 import asyncio
-from database import fetch_data
 from zoneinfo import ZoneInfo
+
+from database import fetch_data
 
 local_tz = ZoneInfo("Asia/Kuala_Lumpur")
 
@@ -20,7 +21,7 @@ def render_tab2(is_repo_analysis):
         </style>
     """, unsafe_allow_html=True)
 
-    st.title(":green[Logs Viewer]")
+    st.subheader(":green[Logs Viewer]")
 
     # Step 1: Fetch distinct project_ids
     project_id_query = "SELECT DISTINCT project_id FROM temp_agent_step ORDER BY project_id"
@@ -123,7 +124,7 @@ def render_tab2(is_repo_analysis):
             status_color = "gray"
 
         col1.markdown(
-            f"<span style='color: gray;'>{row['project_id']}</span><br><strong>{row['run_id'][:8]}</strong>",
+            f"<span style='color: gray;'>{row['project_id']}</span><br><strong>{row['run_id']}</strong>",
             unsafe_allow_html=True
         )
         col2.markdown(

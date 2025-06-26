@@ -35,7 +35,15 @@ class PromptLibrary:
         else:
             raise ValueError(f"Invalid YAML structure in {yaml_path}")
 
-    def build_prompt(self, role: str, prompt_type: str, code: Optional[str] = "", json_output: Optional[Union[str, dict]] = None, feedback: Optional[str] = "") -> tuple[str, str]:
+    def build_prompt(
+            self, 
+            role: str, 
+            prompt_type: str, 
+            code: Optional[str] = "", 
+            json_output: Optional[Union[str, dict]] = None, 
+            feedback: Optional[str] = "",
+            json_list: Optional[Union[str, dict]] = None,
+        ) -> tuple[str, str]:
         cp.log_info(f"Building prompt for role: {role}")
 
         prompt = self.get_prompt_template(role, prompt_type)
@@ -77,6 +85,28 @@ class PromptLibrary:
             except Exception as e:
                 cp.log_error(f"⚠️ Error building json_section: {e}")
                 json_section = "<json>[UNABLE TO SERIALIZE OUTPUT]</json>"
+        
+        if json_list:
+            try:
+                if isinstance(json_list, list):
+                    json_str = json.dumps(json_list, indent=2, ensure_ascii=False)
+                elif isinstance(json_list, str):
+                    try:
+                        parsed = json.loads(json_list)
+                        json_str = json.dumps(parsed, indent=2, ensure_ascii=False)
+                    except json.JSONDecodeError:
+                        json_str = json_list
+                else:
+                    raise ValueError("json_list must be a list or JSON string")
+
+                json_section = f"""
+                <json_list>
+                {json_str}
+                </json_list>
+                """
+            except Exception as e:
+                cp.log_error(f"⚠️ Error building json_list section: {e}")
+                json_section = "<json_list>[UNABLE TO SERIALIZE LIST]</json_list>"
 
         feedback_section = ""
         if feedback:

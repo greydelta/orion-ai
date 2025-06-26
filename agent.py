@@ -6,7 +6,7 @@ from uuid import uuid4
 
 import utils.color_print as cp
 from utils.json_rpc_client import json_rpc_client
-from langgraph_pipeline import graph, EngineerState
+from langgraph_pipeline import conversionWorkflow, ConversionWorkflowState
 
 load_dotenv()
 
@@ -33,16 +33,16 @@ async def run_engineer_pipeline(file_name):
         return {"error": "file not found"}
 
     # Run through LangGraph
-    # initial_state = EngineerState(code=match["content"])
-    initial_state = EngineerState(
+    # initial_state = ConversionWorkflowState(code=match["content"])
+    initial_state = ConversionWorkflowState(
         run_id = str(uuid4()),
         cycle_id = 0,
         code = match["content"]
     )
-    result = graph.invoke(initial_state)
+    result = conversionWorkflow.ainvoke(initial_state)
 
     raw_output = result.get("json_spec", "")
-    cp.log_debug("🧠 Raw LLM Output:\n" + raw_output)
+    # cp.log_debug("🧠 Raw LLM Output:\n" + raw_output)
 
     try:
         parsed = json.loads(raw_output)
