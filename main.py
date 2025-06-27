@@ -13,7 +13,7 @@ from pydantic import BaseModel
 
 import utils.color_print as cp
 from agent import run_engineer_pipeline  
-from langgraph_pipeline import conversionWorkflow, ConversionWorkflowState
+from conversion_pipeline import conversionWorkflow, ConversionWorkflowState
 from summarizer_pipeline import summarizerWorkflow
 
 load_dotenv()
@@ -78,7 +78,7 @@ async def get_repo_top_languages(request: Request):
 async def handle_rpc(request: Request):
     body = await request.json()
     try:
-        rpc = JsonRPCRequest(**body)
+        rpc = JsonRPCRequest(**body) 
         if rpc.method == "get_context":
             cp.log_info('/get_context called')
             documents = await fetch_github_repo_code()

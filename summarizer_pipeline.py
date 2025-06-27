@@ -12,7 +12,7 @@ from pydantic import BaseModel, TypeAdapter
 
 import utils.color_print as cp
 from llm_provider import build_llm
-from langgraph_pipeline import ConversionWorkflowState
+from conversion_pipeline import ConversionWorkflowState
 from prompts.prompt_library import PromptLibrary
 from database import log_agent_step, fetch_data
 from utils.llm_output_parser import parse_llm_response

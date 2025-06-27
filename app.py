@@ -220,7 +220,7 @@ with tab1:
             st.markdown("🧠 Top language analysis")
             st.code(top, language="json")
 
-    st.subheader("Summarize User Stories")
+    st.subheader("(fallback) Summarize User Stories")
 
     run_id = st.text_input("Enter `run_id` to summarize")
 

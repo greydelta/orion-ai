@@ -52,7 +52,7 @@ class PromptLibrary:
         system = prompt.get("system", "")
         instructions = prompt.get("instructions", "")
         rules = prompt.get("rules", [])
-        example_format = prompt.get("format", {})
+        example_format = prompt.get("format", {}) 
 
         code_section = ""
         if code:
